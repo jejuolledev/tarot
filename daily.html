@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="오늘의 타로 운세 - 하루를 위한 메시지를 받아보세요">
+    <title>✨ 오늘의 운세 - 타로 카드</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 반짝이는 별 배경 */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-15px) rotate(5deg); }
+            66% { transform: translateY(-10px) rotate(-5deg); }
+        }
+        
+        body::before {
+            content: '✨';
+            position: fixed;
+            top: 10%;
+            left: 10%;
+            font-size: 2rem;
+            animation: twinkle 3s infinite, float 6s infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        body::after {
+            content: '🌟';
+            position: fixed;
+            top: 20%;
+            right: 15%;
+            font-size: 1.5rem;
+            animation: twinkle 4s infinite 1s, float 7s infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .container::before {
+            content: '🌙';
+            position: fixed;
+            bottom: 15%;
+            left: 8%;
+            font-size: 2.5rem;
+            animation: twinkle 5s infinite 2s, float 8s infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .container::after {
+            content: '✨';
+            position: fixed;
+            bottom: 25%;
+            right: 10%;
+            font-size: 1.8rem;
+            animation: twinkle 3.5s infinite 1.5s, float 6.5s infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* 말풍선 스타일 모달 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 255, 0.95) 100%);
+            border-radius: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 3rem 2.5rem;
+            position: relative;
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: linear-gradient(135deg, #ff6ec7 0%, #7873f5 100%);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 110, 199, 0.5);
+            font-weight: bold;
+        }
+        
+        .modal-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 8px 30px rgba(255, 110, 199, 0.7);
+        }
+        
+        .modal-card-image {
+            max-width: 280px;
+            margin: 0 auto 2rem;
+            display: block;
+            border-radius: 25px;
+            border: 3px solid rgba(255, 110, 199, 0.3);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            animation: cardFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes cardFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .modal-card-name {
+            text-align: center;
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+        
+        .modal-card-keywords {
+            text-align: center;
+            color: #7873f5;
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            font-style: italic;
+            font-weight: 600;
+        }
+        
+        /* 귀여운 말풍선 섹션 */
+        .modal-section {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 25px;
+            margin-bottom: 1.5rem;
+            border: 2px solid #ffb3d9;
+            box-shadow: 0 5px 20px rgba(255, 179, 217, 0.2);
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .modal-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 179, 217, 0.3);
+        }
+        
+        .modal-section::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 30px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-right: 2px solid #ffb3d9;
+            border-bottom: 2px solid #ffb3d9;
+            transform: rotate(45deg);
+        }
+        
+        .modal-section:nth-child(odd) {
+            border-color: #c7b3ff;
+        }
+        
+        .modal-section:nth-child(odd)::before {
+            border-color: #c7b3ff;
+        }
+        
+        .modal-section-title {
+            color: #764ba2;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .modal-section-content {
+            color: #333;
+            line-height: 1.9;
+            font-size: 1.05rem;
+        }
+        
+        /* 특별한 마지막 섹션 */
+        .modal-section.special {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        
+        .modal-section.special::before {
+            display: none;
+        }
+        
+        .modal-section.special .modal-section-title {
+            color: white;
+        }
+        
+        .modal-section.special .modal-section-content {
+            color: white;
+            font-style: italic;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        /* 파티클 효과 */
+        .particle {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #ff6ec7, #7873f5);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat 2s ease-out forwards;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(255, 110, 199, 0.8);
+        }
+        
+        @keyframes particleFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx, 0), var(--ty, -150px)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        /* 결과 프리뷰 */
+        .result-preview {
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .result-preview:hover {
+            transform: translateY(-10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-container">
+            <div class="header">
+                <div class="logo">✨</div>
+                <h1>오늘의 운세</h1>
+                <p class="subtitle">하루를 위한 특별한 메시지</p>
+            </div>
+            
+            <!-- 인트로 화면 -->
+            <div id="introScreen" class="intro-screen">
+                <div class="intro-text">
+                    <p>✨ 마음을 가다듬고<br>
+                    오늘 하루에 대한 질문을 떠올려보세요</p>
+                </div>
+                
+                <div class="card-back" onclick="drawCard()">
+                    <div class="card-back-icon">🎴</div>
+                    <div class="card-back-text">카드를 클릭하여<br>오늘의 메시지 확인하기</div>
+                </div>
+            </div>
+            
+            <!-- 결과 화면 -->
+            <div id="resultScreen" class="tarot-result">
+                <div class="intro-text">
+                    <p style="font-weight: 700;">💫 카드를 클릭하면 자세한 해석을 볼 수 있어요!</p>
+                </div>
+                
+                <div class="result-preview" onclick="openModal()">
+                    <div class="card-image-container">
+                        <img id="cardImage" class="card-image" src="" alt="타로 카드">
+                    </div>
+                    
+                    <h2 id="cardName" class="card-name"></h2>
+                    <p id="cardKeywords" class="card-keywords"></p>
+                    
+                    <button class="btn" style="margin-top: 1.5rem;">
+                        🔍 자세히 보기
+                    </button>
+                </div>
+                
+                <div class="btn-container" style="margin-top: 3rem;">
+                    <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 홈으로</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 말풍선 모달 -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modalBody">
+                <!-- 동적으로 채워짐 -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="tarot-data.js"></script>
+    <script>
+        let currentCard = null;
+        
+        // 랜덤으로 1장의 카드를 뽑는 함수
+        function drawRandomCard() {
+            const randomIndex = Math.floor(Math.random() * tarotCards.length);
+            return tarotCards[randomIndex];
+        }
+        
+        // 파티클 효과
+        function createParticles(x, y) {
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.animationDelay = Math.random() * 0.3 + 's';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 150 + 100;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+                
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+        
+        function drawCard() {
+            currentCard = drawRandomCard();
+            
+            // 파티클 효과
+            const cardBack = document.querySelector('.card-back');
+            const rect = cardBack.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            
+            // 인트로 화면 숨기기
+            document.getElementById('introScreen').style.display = 'none';
+            
+            // 결과 화면 업데이트
+            document.getElementById('cardImage').src = currentCard.image;
+            document.getElementById('cardName').textContent = currentCard.nameKo;
+            document.getElementById('cardKeywords').textContent = currentCard.keywords;
+            
+            // 결과 화면 표시
+            const resultScreen = document.getElementById('resultScreen');
+            resultScreen.classList.add('show');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function openModal() {
+            if (!currentCard) return;
+            
+            const modal = document.getElementById('modalOverlay');
+            const modalBody = document.getElementById('modalBody');
+            
+            // 컨텐츠 업데이트
+            modalBody.innerHTML = `
+                <img src="${currentCard.image}" alt="${currentCard.nameKo}" class="modal-card-image">
+                <h2 class="modal-card-name">${currentCard.nameKo}</h2>
+                <p class="modal-card-keywords">${currentCard.keywords}</p>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        ✨ 오늘의 메시지
+                    </div>
+                    <div class="modal-section-content">
+                        ${currentCard.daily}
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        📖 카드의 의미
+                    </div>
+                    <div class="modal-section-content">
+                        ${currentCard.meaning}
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        💡 오늘의 조언
+                    </div>
+                    <div class="modal-section-content">
+                        ${currentCard.advice.daily}
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        ⚠️ 주의할 점
+                    </div>
+                    <div class="modal-section-content">
+                        ${currentCard.warning.daily}
+                    </div>
+                </div>
+                
+                <div class="modal-section special">
+                    <div class="modal-section-title">
+                        🌙 타로의 속삭임
+                    </div>
+                    <div class="modal-section-content">
+                        ${currentCard.quote}
+                    </div>
+                </div>
+            `;
+            
+            // 모달 표시
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
+        }
+        
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.remove('show');
+            
+            // 애니메이션 완료 후 완전히 초기화
+            setTimeout(() => {
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.style.transform = '';
+                    modalContent.style.opacity = '';
+                }
+            }, 300);
+        }
+    </script>
+</body>
+</html>
