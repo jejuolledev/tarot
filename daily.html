@@ -66,6 +66,14 @@
             pointer-events: none;
         }
         
+        /* body 스크롤 막기 (모달 열렸을 때) */
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
         /* 말풍선 스타일 모달 */
         .modal-overlay {
             position: fixed;
@@ -95,6 +103,8 @@
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             padding: 3rem 2.5rem;
             position: relative;
             transform: scale(0.7);
@@ -398,12 +408,19 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
+        let scrollPosition = 0;
+
         function openModal() {
             if (!currentCard) return;
-            
+
+            // 현재 스크롤 위치 저장 후 body 스크롤 막기
+            scrollPosition = window.pageYOffset;
+            document.body.classList.add('modal-open');
+            document.body.style.top = `-${scrollPosition}px`;
+
             const modal = document.getElementById('modalOverlay');
             const modalBody = document.getElementById('modalBody');
-            
+
             // 컨텐츠 업데이트
             modalBody.innerHTML = `
                 <img src="${currentCard.image}" alt="${currentCard.nameKo}" class="modal-card-image">
@@ -468,7 +485,12 @@
             }
             const modal = document.getElementById('modalOverlay');
             modal.classList.remove('show');
-            
+
+            // body 스크롤 복원
+            document.body.classList.remove('modal-open');
+            document.body.style.top = '';
+            window.scrollTo(0, scrollPosition);
+
             // 애니메이션 완료 후 완전히 초기화
             setTimeout(() => {
                 const modalContent = modal.querySelector('.modal-content');
