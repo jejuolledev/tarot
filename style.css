@@ -457,6 +457,17 @@ h1 {
     .card-name {
         font-size: 2rem;
     }
+
+    /* Mobile Optimization: Reduce card size */
+    .card-image-container {
+        max-width: 220px;
+        margin: 1.5rem auto;
+    }
+
+    .modal-card-image {
+        max-width: 120px;
+        margin: 2rem auto 1rem;
+    }
 }
 
 /* 추가 애니메이션 */
