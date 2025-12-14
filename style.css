@@ -668,3 +668,60 @@ body::after {
 .mode-icon {
     animation: float 3s ease-in-out infinite;
 }
+
+/* 푸터 */
+.footer {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    padding: 30px 20px;
+    text-align: center;
+    margin-top: 60px;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.footer-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.footer-links {
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    line-height: 1.8;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #ff6ec7;
+}
+
+.footer-separator {
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.footer-copyright {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .footer {
+        padding: 24px 16px;
+        margin-top: 40px;
+    }
+
+    .footer-links {
+        font-size: 0.85rem;
+    }
+
+    .footer-copyright {
+        font-size: 0.85rem;
+    }
+}
