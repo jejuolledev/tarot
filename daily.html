@@ -478,7 +478,7 @@
     <script>
         let currentCard = null;
 
-        // iOS 공유용 캐시 (2단계 공유를 위해)
+        // 공유 데이터 캐시 (사전 준비용)
         let cachedShareData = null;
 
         // 랜덤으로 1장의 카드를 뽑는 함수
@@ -486,7 +486,7 @@
             const randomIndex = Math.floor(Math.random() * tarotCards.length);
             return tarotCards[randomIndex];
         }
-        
+
         // 파티클 효과
         function createParticles(x, y) {
             for (let i = 0; i < 30; i++) {
@@ -495,43 +495,47 @@
                 particle.style.left = x + 'px';
                 particle.style.top = y + 'px';
                 particle.style.animationDelay = Math.random() * 0.3 + 's';
-                
+
                 const angle = Math.random() * Math.PI * 2;
                 const distance = Math.random() * 150 + 100;
                 const tx = Math.cos(angle) * distance;
                 const ty = Math.sin(angle) * distance;
-                
+
                 particle.style.setProperty('--tx', tx + 'px');
                 particle.style.setProperty('--ty', ty + 'px');
-                
+
                 document.body.appendChild(particle);
                 setTimeout(() => particle.remove(), 2000);
             }
         }
-        
+
         function drawCard() {
             currentCard = drawRandomCard();
-            
+
             // 파티클 효과
             const cardBack = document.querySelector('.card-back');
             const rect = cardBack.getBoundingClientRect();
             createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
-            
+
             // 인트로 화면 숨기기
             document.getElementById('introScreen').style.display = 'none';
-            
+
             // 결과 화면 업데이트
             document.getElementById('cardImage').src = currentCard.image;
             document.getElementById('cardName').textContent = currentCard.nameKo;
             document.getElementById('cardKeywords').textContent = currentCard.keywords;
-            
+
             // 결과 화면 표시
             const resultScreen = document.getElementById('resultScreen');
             resultScreen.classList.add('show');
-            
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 카드 선택 시 공유 데이터 미리 준비 시작
+            cachedShareData = null;
+            prepareShareData(currentCard);
         }
-        
+
         let scrollPosition = 0;
 
         function openModal() {
@@ -550,7 +554,7 @@
                 <img src="${currentCard.image}" alt="${currentCard.nameKo}" class="modal-card-image">
                 <h2 class="modal-card-name">${currentCard.nameKo}</h2>
                 <p class="modal-card-keywords">${currentCard.keywords}</p>
-                
+
                 <div class="modal-section">
                     <div class="modal-section-title">
                         ✨ 오늘의 메시지
@@ -559,7 +563,7 @@
                         ${currentCard.daily}
                     </div>
                 </div>
-                
+
                 <div class="modal-section">
                     <div class="modal-section-title">
                         📖 카드의 의미
@@ -568,7 +572,7 @@
                         ${currentCard.meaning}
                     </div>
                 </div>
-                
+
                 <div class="modal-section">
                     <div class="modal-section-title">
                         💡 오늘의 조언
@@ -577,7 +581,7 @@
                         ${currentCard.advice.daily}
                     </div>
                 </div>
-                
+
                 <div class="modal-section">
                     <div class="modal-section-title">
                         ⚠️ 주의할 점
@@ -586,7 +590,7 @@
                         ${currentCard.warning.daily}
                     </div>
                 </div>
-                
+
                 <div class="modal-section special">
                     <div class="modal-section-title">
                         🌙 타로의 속삭임
@@ -596,13 +600,23 @@
                     </div>
                 </div>
             `;
-            
+
+            // 공유 버튼 상태 업데이트
+            const shareBtn = document.getElementById('shareBtn');
+            if (cachedShareData && cachedShareData.file) {
+                shareBtn.innerHTML = '📤 결과 공유하기';
+                shareBtn.disabled = false;
+            } else {
+                shareBtn.innerHTML = '📤 공유 준비 중...';
+                shareBtn.disabled = false; // 준비 안됐어도 텍스트 공유는 가능하게
+            }
+
             // 모달 표시
             requestAnimationFrame(() => {
                 modal.classList.add('show');
             });
         }
-        
+
         function closeModal(event) {
             if (event && event.target !== event.currentTarget) {
                 return;
@@ -625,39 +639,36 @@
             }, 300);
         }
 
-        // 공유하기 기능
-        async function shareResult() {
-            if (!currentCard) return;
-
-            const shareBtn = document.getElementById('shareBtn');
-            shareBtn.disabled = true;
-            shareBtn.innerHTML = '📤 이미지 생성 중...';
-
-            // 디버깅 정보 출력
-            console.log('[share] ua:', navigator.userAgent);
+        // ========================================
+        // 공유 데이터 사전 준비 (prewarm)
+        // ========================================
+        async function prepareShareData(card) {
+            if (!card) return;
 
             const shareUrl = 'https://tarot.moahub.co.kr';
-            const shareText = `✨ 오늘의 카드: ${currentCard.nameKo}\n\n${currentCard.daily}\n\n🔮 나도 타로 보러가기: ${shareUrl}`;
+            const shareText = `✨ 오늘의 카드: ${card.nameKo}\n\n${card.daily}\n\n🔮 나도 타로 보러가기: ${shareUrl}`;
             const shareTitle = '오늘의 타로 운세';
 
-            let file = null;
-            let imageUrl = null;
+            console.log('[prepareShare] starting prewarm...');
 
             try {
                 // 캡쳐용 영역 업데이트
-                document.getElementById('captureCardName').textContent = currentCard.nameKo;
-                document.getElementById('captureKeywords').textContent = currentCard.keywords;
-                document.getElementById('captureCardImage').src = currentCard.image;
-                document.getElementById('captureMessage').textContent = currentCard.daily;
+                document.getElementById('captureCardName').textContent = card.nameKo;
+                document.getElementById('captureKeywords').textContent = card.keywords;
+
+                // CORS 설정: crossOrigin을 src 설정 전에 지정
+                const captureImg = document.getElementById('captureCardImage');
+                captureImg.crossOrigin = 'anonymous';
+                captureImg.src = card.image;
+                document.getElementById('captureMessage').textContent = card.daily;
 
                 // 이미지 로딩 대기
                 await new Promise(resolve => {
-                    const img = document.getElementById('captureCardImage');
-                    if (img.complete) {
+                    if (captureImg.complete && captureImg.naturalHeight !== 0) {
                         resolve();
                     } else {
-                        img.onload = resolve;
-                        img.onerror = resolve;
+                        captureImg.onload = resolve;
+                        captureImg.onerror = resolve;
                     }
                 });
 
@@ -669,8 +680,12 @@
                 captureArea.style.position = 'fixed';
                 captureArea.style.zIndex = '-1';
 
-                // 잠시 대기 후 캡쳐
-                await new Promise(resolve => setTimeout(resolve, 150));
+                // requestAnimationFrame 2회로 최소 대기
+                await new Promise(resolve => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(resolve);
+                    });
+                });
 
                 // html2canvas로 캡쳐
                 const canvas = await html2canvas(captureArea, {
@@ -692,15 +707,55 @@
 
                 // canvas를 blob으로 변환
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                file = new File([blob], 'tarot-result.png', { type: 'image/png' });
-                imageUrl = canvas.toDataURL('image/png');
+                const file = new File([blob], 'tarot-result.png', { type: 'image/png' });
 
-                console.log('[share] image captured, file size:', file.size);
-            } catch (captureErr) {
-                console.error('[share] capture failed:', captureErr?.name, captureErr?.message, captureErr);
+                // 캐시에 저장
+                cachedShareData = {
+                    file: file,
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl
+                };
+
+                console.log('[prepareShare] prewarm completed, file size:', file.size);
+
+                // 공유 버튼 상태 업데이트
+                const shareBtn = document.getElementById('shareBtn');
+                if (shareBtn) {
+                    shareBtn.innerHTML = '📤 결과 공유하기';
+                }
+
+            } catch (err) {
+                console.error('[prepareShare] prewarm failed:', err?.name, err?.message, err);
+                // 실패해도 텍스트 공유는 가능하도록 기본 데이터만 저장
+                cachedShareData = {
+                    file: null,
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl
+                };
             }
+        }
 
-            // Step A: files-only 공유 시도 (iOS Chrome 대응: files + text/title 섞지 않음)
+        // ========================================
+        // 공유하기 기능 (클릭 시점에는 await 없이 즉시 실행)
+        // ========================================
+        async function shareResult() {
+            if (!currentCard) return;
+
+            const shareBtn = document.getElementById('shareBtn');
+
+            // 디버깅 정보 출력
+            console.log('[share] ua:', navigator.userAgent);
+            console.log('[share] cachedShareData:', cachedShareData ? 'exists' : 'null');
+
+            // 캐시된 데이터 사용 (없으면 기본값)
+            const shareUrl = cachedShareData?.url || 'https://tarot.moahub.co.kr';
+            const shareText = cachedShareData?.text || `✨ 오늘의 카드: ${currentCard.nameKo}\n\n${currentCard.daily}\n\n🔮 나도 타로 보러가기: ${shareUrl}`;
+            const shareTitle = cachedShareData?.title || '오늘의 타로 운세';
+            const file = cachedShareData?.file;
+
+            // Step A: files-only 공유 시도 (캐시된 파일이 있을 때만)
             if (file && navigator.share) {
                 const canShareFiles = navigator.canShare?.({ files: [file] });
                 console.log('[share] canShareFiles:', canShareFiles);
@@ -710,14 +765,10 @@
                         console.log('[share] attempting files-only share...');
                         await navigator.share({ files: [file] });
                         console.log('[share] files-only share succeeded');
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = '📤 결과 공유하기';
                         return; // 성공 시 종료
                     } catch (err) {
                         console.error('[share] step A (files-only) failed:', err?.name, err?.message, err);
                         if (err.name === 'AbortError') {
-                            shareBtn.disabled = false;
-                            shareBtn.innerHTML = '📤 결과 공유하기';
                             return; // 사용자가 취소한 경우 종료
                         }
                         // 실패 시 Step B로 진행
@@ -735,74 +786,22 @@
                         url: shareUrl
                     });
                     console.log('[share] text-only share succeeded');
-                    shareBtn.disabled = false;
-                    shareBtn.innerHTML = '📤 결과 공유하기';
                     return; // 성공 시 종료
                 } catch (err) {
                     console.error('[share] step B (text-only) failed:', err?.name, err?.message, err);
                     if (err.name === 'AbortError') {
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = '📤 결과 공유하기';
                         return; // 사용자가 취소한 경우 종료
                     }
                     // 실패 시 Step C로 진행
                 }
             }
 
-            // Step C: Fallback - 클립보드 복사 또는 새 창 열기
-            console.log('[share] falling back to clipboard/newWindow...');
-
-            // 클립보드 복사 시도
+            // Step C: Fallback - 클립보드 복사
+            console.log('[share] falling back to clipboard...');
             try {
                 await navigator.clipboard.writeText(shareUrl);
                 console.log('[share] clipboard copy succeeded');
-
-                // 이미지가 있으면 새 창에서 열기
-                if (imageUrl) {
-                    const newWindow = window.open('', '_blank');
-                    if (newWindow) {
-                        const doc = newWindow.document;
-                        doc.write(
-                            '<!DOCTYPE html>' +
-                            '<html>' +
-                            '<head>' +
-                            '<meta charset="UTF-8">' +
-                            '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-                            '<title>타로 결과 저장하기</title>' +
-                            '<style>' +
-                            'body { margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-sizing: border-box; }' +
-                            '.guide { background: white; padding: 15px 25px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }' +
-                            '.guide h3 { margin: 0 0 10px 0; color: #764ba2; }' +
-                            '.guide p { margin: 0; color: #666; font-size: 14px; }' +
-                            'img { max-width: 100%; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }' +
-                            '.text-box { margin-top: 20px; width: 100%; max-width: 350px; }' +
-                            '.text-box p { color: white; margin: 0 0 10px 0; font-weight: bold; text-align: center; }' +
-                            'textarea { width: 100%; height: 120px; border-radius: 15px; border: none; padding: 15px; font-size: 14px; resize: none; box-sizing: border-box; }' +
-                            '</style>' +
-                            '</head>' +
-                            '<body>' +
-                            '<div class="guide">' +
-                            '<h3>📸 이미지 저장하기</h3>' +
-                            '<p>이미지를 <strong>길게 눌러서</strong> 저장하세요!</p>' +
-                            '</div>' +
-                            '<img src="' + imageUrl + '" alt="타로 결과">' +
-                            '<div class="text-box">' +
-                            '<p>📋 링크가 복사되었습니다! 아래 텍스트도 함께 공유해보세요!</p>' +
-                            '<textarea readonly onclick="this.select()">' + shareText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>' +
-                            '</div>' +
-                            '</body>' +
-                            '</html>'
-                        );
-                        doc.close();
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = '📤 결과 공유하기';
-                        return;
-                    }
-                }
-
                 alert('링크가 클립보드에 복사되었습니다!');
-                shareBtn.disabled = false;
-                shareBtn.innerHTML = '📤 결과 공유하기';
                 return;
             } catch (clipErr) {
                 console.error('[share] step C (clipboard) failed:', clipErr?.name, clipErr?.message, clipErr);
@@ -810,8 +809,6 @@
 
             // Step C-2: 마지막 fallback - prompt
             prompt('아래 링크를 복사해서 공유해주세요!', shareUrl);
-            shareBtn.disabled = false;
-            shareBtn.innerHTML = '📤 결과 공유하기';
         }
     </script>
 
