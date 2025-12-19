@@ -19,6 +19,8 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1642749702806306"
      crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
+    <!-- html2canvas for screenshot -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 반짝이는 별 배경 */
         @keyframes twinkle {
@@ -302,6 +304,97 @@
         .result-preview:hover {
             transform: translateY(-10px);
         }
+
+        /* 공유하기 버튼 스타일 */
+        .share-btn {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(37, 211, 102, 0.6);
+        }
+
+        .share-btn:active {
+            transform: translateY(0);
+        }
+
+        .share-btn:disabled {
+            opacity: 0.7;
+            cursor: wait;
+        }
+
+        /* 캡쳐용 영역 스타일 */
+        .capture-area {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 400px;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 30px;
+            z-index: -1;
+        }
+
+        .capture-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .capture-card img {
+            max-width: 150px;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+        }
+
+        .capture-card h2 {
+            font-size: 1.5rem;
+            color: #764ba2;
+            margin-bottom: 0.5rem;
+        }
+
+        .capture-card .keywords {
+            color: #7873f5;
+            font-size: 1rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .capture-card .message {
+            background: #f8f4ff;
+            padding: 1rem;
+            border-radius: 15px;
+            color: #333;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .capture-card .site-url {
+            color: #764ba2;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .capture-card .logo-text {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -360,6 +453,23 @@
             <div id="modalBody">
                 <!-- 동적으로 채워짐 -->
             </div>
+            <div style="text-align: center;">
+                <button class="share-btn" onclick="shareResult()" id="shareBtn">
+                    📤 결과 공유하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 캡쳐용 숨겨진 영역 -->
+    <div class="capture-area" id="captureArea">
+        <div class="capture-card">
+            <div class="logo-text">✨</div>
+            <h2 id="captureCardName"></h2>
+            <p class="keywords" id="captureKeywords"></p>
+            <img id="captureCardImage" src="" alt="타로 카드">
+            <div class="message" id="captureMessage"></div>
+            <p class="site-url">🔮 tarot.moahub.co.kr</p>
         </div>
     </div>
     
@@ -509,6 +619,91 @@
                     modalContent.style.opacity = '';
                 }
             }, 300);
+        }
+
+        // 공유하기 기능
+        async function shareResult() {
+            if (!currentCard) return;
+
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.disabled = true;
+            shareBtn.innerHTML = '📤 이미지 생성 중...';
+
+            try {
+                // 캡쳐용 영역 업데이트
+                document.getElementById('captureCardName').textContent = currentCard.nameKo;
+                document.getElementById('captureKeywords').textContent = currentCard.keywords;
+                document.getElementById('captureCardImage').src = currentCard.image;
+                document.getElementById('captureMessage').textContent = currentCard.daily;
+
+                // 이미지 로딩 대기
+                await new Promise(resolve => {
+                    const img = document.getElementById('captureCardImage');
+                    if (img.complete) {
+                        resolve();
+                    } else {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    }
+                });
+
+                // 캡쳐 영역을 화면에 잠시 표시 (캡쳐를 위해)
+                const captureArea = document.getElementById('captureArea');
+                captureArea.style.left = '0';
+                captureArea.style.zIndex = '10000';
+
+                // 잠시 대기 후 캡쳐
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // html2canvas로 캡쳐
+                const canvas = await html2canvas(captureArea, {
+                    backgroundColor: null,
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                });
+
+                // 캡쳐 영역 다시 숨기기
+                captureArea.style.left = '-9999px';
+                captureArea.style.zIndex = '-1';
+
+                // canvas를 blob으로 변환
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const file = new File([blob], 'tarot-result.png', { type: 'image/png' });
+
+                const shareData = {
+                    title: '오늘의 타로 운세',
+                    text: `✨ 오늘의 카드: ${currentCard.nameKo}\n\n${currentCard.daily}\n\n🔮 나도 타로 보러가기`,
+                    url: 'https://tarot.moahub.co.kr'
+                };
+
+                // Web Share API 지원 확인 및 파일 공유 가능 여부 확인
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        ...shareData,
+                        files: [file]
+                    });
+                } else if (navigator.share) {
+                    // 파일 공유가 안되면 텍스트만 공유
+                    await navigator.share(shareData);
+                } else {
+                    // Web Share API 미지원 시 다운로드
+                    const link = document.createElement('a');
+                    link.download = 'tarot-result.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    alert('이미지가 다운로드되었습니다!\n\ntarot.moahub.co.kr 에서 타로를 볼 수 있어요 ✨');
+                }
+            } catch (error) {
+                console.error('공유 실패:', error);
+                if (error.name !== 'AbortError') {
+                    alert('공유하기에 실패했습니다. 다시 시도해주세요.');
+                }
+            } finally {
+                shareBtn.disabled = false;
+                shareBtn.innerHTML = '📤 결과 공유하기';
+            }
         }
     </script>
 
