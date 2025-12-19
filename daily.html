@@ -337,64 +337,97 @@
             cursor: wait;
         }
 
-        /* 캡쳐용 영역 스타일 */
+        /* 캡쳐용 영역 스타일 (전체 모달 내용 포함) */
         .capture-area {
             position: absolute;
             left: -9999px;
             top: 0;
             width: 400px;
-            padding: 2rem;
+            padding: 1.5rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            border-radius: 30px;
+            border-radius: 24px;
             z-index: -1;
             visibility: hidden;
+            overflow: visible; /* 스크롤 방지 - 전체 캡처 */
         }
 
         .capture-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 25px;
-            padding: 2rem;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 1.5rem;
             text-align: center;
         }
 
         .capture-card img {
-            max-width: 150px;
-            border-radius: 15px;
-            margin-bottom: 1rem;
+            max-width: 120px;
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         .capture-card h2 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: #764ba2;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
         }
 
         .capture-card .keywords {
             color: #7873f5;
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-style: italic;
-            margin-bottom: 1rem;
-        }
-
-        .capture-card .message {
-            background: #f8f4ff;
-            padding: 1rem;
-            border-radius: 15px;
-            color: #333;
-            line-height: 1.6;
-            font-size: 0.95rem;
             margin-bottom: 1rem;
         }
 
         .capture-card .site-url {
             color: #764ba2;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
         }
 
         .capture-card .logo-text {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        /* 캡처용 섹션 스타일 */
+        .capture-section {
+            background: #f8f4ff;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.6rem;
+            text-align: left;
+        }
+
+        .capture-section-title {
+            color: #764ba2;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .capture-section-content {
+            color: #333;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .capture-section.special {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .capture-section.special .capture-section-title {
+            color: white;
+        }
+
+        .capture-section.special .capture-section-content {
+            color: white;
+            font-style: italic;
+            text-align: center;
         }
     </style>
 </head>
@@ -462,14 +495,44 @@
         </div>
     </div>
 
-    <!-- 캡쳐용 숨겨진 영역 -->
+    <!-- 캡쳐용 숨겨진 영역 (전체 모달 내용 포함) -->
     <div class="capture-area" id="captureArea">
         <div class="capture-card">
-            <div class="logo-text">✨</div>
+            <div class="logo-text">✨ 오늘의 운세</div>
+            <img id="captureCardImage" src="" alt="타로 카드">
             <h2 id="captureCardName"></h2>
             <p class="keywords" id="captureKeywords"></p>
-            <img id="captureCardImage" src="" alt="타로 카드">
-            <div class="message" id="captureMessage"></div>
+
+            <!-- 오늘의 메시지 -->
+            <div class="capture-section">
+                <div class="capture-section-title">✨ 오늘의 메시지</div>
+                <div class="capture-section-content" id="captureDaily"></div>
+            </div>
+
+            <!-- 카드의 의미 -->
+            <div class="capture-section">
+                <div class="capture-section-title">📖 카드의 의미</div>
+                <div class="capture-section-content" id="captureMeaning"></div>
+            </div>
+
+            <!-- 오늘의 조언 -->
+            <div class="capture-section">
+                <div class="capture-section-title">💡 오늘의 조언</div>
+                <div class="capture-section-content" id="captureAdvice"></div>
+            </div>
+
+            <!-- 주의할 점 -->
+            <div class="capture-section">
+                <div class="capture-section-title">⚠️ 주의할 점</div>
+                <div class="capture-section-content" id="captureWarning"></div>
+            </div>
+
+            <!-- 타로의 속삭임 -->
+            <div class="capture-section special">
+                <div class="capture-section-title">🌙 타로의 속삭임</div>
+                <div class="capture-section-content" id="captureQuote"></div>
+            </div>
+
             <p class="site-url">🔮 tarot.moahub.co.kr</p>
         </div>
     </div>
@@ -652,7 +715,7 @@
             console.log('[prepareShare] starting prewarm...');
 
             try {
-                // 캡쳐용 영역 업데이트
+                // 캡쳐용 영역 업데이트 (전체 모달 내용)
                 document.getElementById('captureCardName').textContent = card.nameKo;
                 document.getElementById('captureKeywords').textContent = card.keywords;
 
@@ -660,7 +723,13 @@
                 const captureImg = document.getElementById('captureCardImage');
                 captureImg.crossOrigin = 'anonymous';
                 captureImg.src = card.image;
-                document.getElementById('captureMessage').textContent = card.daily;
+
+                // 전체 섹션 데이터 채우기
+                document.getElementById('captureDaily').textContent = card.daily;
+                document.getElementById('captureMeaning').textContent = card.meaning;
+                document.getElementById('captureAdvice').textContent = card.advice.daily;
+                document.getElementById('captureWarning').textContent = card.warning.daily;
+                document.getElementById('captureQuote').textContent = card.quote;
 
                 // 이미지 로딩 대기
                 await new Promise(resolve => {
@@ -687,10 +756,10 @@
                     });
                 });
 
-                // html2canvas로 캡쳐
+                // html2canvas로 캡쳐 (scale 1.5로 최적화 - iOS 파일 크기 제한 대응)
                 const canvas = await html2canvas(captureArea, {
                     backgroundColor: null,
-                    scale: 2,
+                    scale: 1.5,
                     useCORS: true,
                     allowTaint: false,
                     logging: false,
@@ -705,9 +774,11 @@
                 captureArea.style.left = '-9999px';
                 captureArea.style.position = 'absolute';
 
-                // canvas를 blob으로 변환
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                const file = new File([blob], 'tarot-result.png', { type: 'image/png' });
+                // canvas를 JPEG blob으로 변환 (파일 크기 최적화)
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+                const file = new File([blob], 'tarot-result.jpg', { type: 'image/jpeg' });
+
+                console.log('[prepareShare] blob size:', blob.size, 'bytes');
 
                 // 캐시에 저장
                 cachedShareData = {

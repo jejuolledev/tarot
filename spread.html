@@ -862,7 +862,7 @@
             cursor: wait;
         }
 
-        /* 캡쳐용 영역 스타일 */
+        /* 캡쳐용 영역 스타일 (전체 종합 해석 포함) */
         .capture-area {
             position: absolute;
             left: -9999px;
@@ -870,76 +870,110 @@
             width: 420px;
             padding: 1.5rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            border-radius: 30px;
+            border-radius: 24px;
             z-index: -1;
             visibility: hidden;
+            overflow: visible; /* 스크롤 방지 - 전체 캡처 */
         }
 
         .capture-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 25px;
-            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 1.2rem;
             text-align: center;
         }
 
         .capture-header {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             color: #764ba2;
             font-weight: 700;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
 
         .capture-three-cards {
             display: flex;
             justify-content: space-between;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+            gap: 0.4rem;
+            margin-bottom: 0.8rem;
         }
 
         .capture-card-item {
             flex: 1;
             text-align: center;
+            background: #f8f4ff;
+            border-radius: 10px;
+            padding: 0.5rem 0.3rem;
         }
 
         .capture-card-item img {
-            width: 80px;
-            border-radius: 10px;
-            margin-bottom: 0.5rem;
+            width: 70px;
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .capture-card-item .position {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #764ba2;
             font-weight: 700;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.2rem;
         }
 
         .capture-card-item .name {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #333;
             font-weight: 600;
-        }
-
-        .capture-message {
-            background: #f8f4ff;
-            padding: 1rem;
-            border-radius: 15px;
-            color: #333;
-            line-height: 1.5;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            text-align: left;
         }
 
         .capture-site-url {
             color: #764ba2;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
         }
 
         .capture-logo-text {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 0.2rem;
+        }
+
+        /* 캡처용 종합 해석 섹션 */
+        .capture-summary-section {
+            background: #f8f4ff;
+            padding: 0.7rem 0.9rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            text-align: left;
+        }
+
+        .capture-summary-title {
+            color: #764ba2;
+            font-size: 0.75rem;
+            font-weight: 700;
             margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .capture-summary-content {
+            color: #333;
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+
+        .capture-summary-section.special {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .capture-summary-section.special .capture-summary-title {
+            color: white;
+        }
+
+        .capture-summary-section.special .capture-summary-content {
+            color: white;
+            text-align: center;
         }
     </style>
 </head>
@@ -996,15 +1030,38 @@
         </div>
     </div>
 
-    <!-- 캡쳐용 숨겨진 영역 -->
+    <!-- 캡쳐용 숨겨진 영역 (전체 종합 해석 포함) -->
     <div class="capture-area" id="captureArea">
         <div class="capture-card">
-            <div class="capture-logo-text">🌙</div>
-            <div class="capture-header">과거·현재·미래 타로</div>
+            <div class="capture-logo-text">🌙 과거·현재·미래 타로</div>
             <div class="capture-three-cards" id="captureThreeCards">
                 <!-- 동적으로 채워짐 -->
             </div>
-            <div class="capture-message" id="captureMessage"></div>
+
+            <!-- 과거 해석 -->
+            <div class="capture-summary-section">
+                <div class="capture-summary-title">📜 과거</div>
+                <div class="capture-summary-content" id="capturePast"></div>
+            </div>
+
+            <!-- 현재 해석 -->
+            <div class="capture-summary-section">
+                <div class="capture-summary-title">✨ 현재</div>
+                <div class="capture-summary-content" id="capturePresent"></div>
+            </div>
+
+            <!-- 미래 해석 -->
+            <div class="capture-summary-section">
+                <div class="capture-summary-title">🌟 미래</div>
+                <div class="capture-summary-content" id="captureFuture"></div>
+            </div>
+
+            <!-- 전체 메시지 -->
+            <div class="capture-summary-section special">
+                <div class="capture-summary-title">💫 전체 메시지</div>
+                <div class="capture-summary-content" id="captureTotalMessage">과거의 경험을 바탕으로 현재를 충실히 살아가면, 미래는 당신이 바라는 방향으로 펼쳐질 것입니다. 각 순간을 소중히 여기며 나아가세요!</div>
+            </div>
+
             <p class="capture-site-url">🔮 tarot.moahub.co.kr</p>
         </div>
     </div>
@@ -1255,13 +1312,10 @@
                     </div>
                 `).join('');
 
-                const captureMessage = document.getElementById('captureMessage');
-                captureMessage.innerHTML = `
-                    <strong>📜 과거:</strong> ${drawnCards[0].nameKo}<br>
-                    <strong>✨ 현재:</strong> ${drawnCards[1].nameKo}<br>
-                    <strong>🌟 미래:</strong> ${drawnCards[2].nameKo}<br><br>
-                    💫 각 순간을 소중히 여기며 나아가세요!
-                `;
+                // 종합 해석 데이터 채우기 (전체 모달 내용)
+                document.getElementById('capturePast').innerHTML = `<strong>${drawnCards[0].nameKo}</strong> - ${drawnCards[0].past}`;
+                document.getElementById('capturePresent').innerHTML = `<strong>${drawnCards[1].nameKo}</strong> - ${drawnCards[1].present}`;
+                document.getElementById('captureFuture').innerHTML = `<strong>${drawnCards[2].nameKo}</strong> - ${drawnCards[2].future}`;
 
                 // 이미지 로딩 대기
                 const images = captureThreeCards.querySelectorAll('img');
@@ -1291,10 +1345,10 @@
                     });
                 });
 
-                // html2canvas로 캡쳐
+                // html2canvas로 캡쳐 (scale 1.5로 최적화 - iOS 파일 크기 제한 대응)
                 const canvas = await html2canvas(captureArea, {
                     backgroundColor: null,
-                    scale: 2,
+                    scale: 1.5,
                     useCORS: true,
                     allowTaint: false,
                     logging: false,
@@ -1309,9 +1363,11 @@
                 captureArea.style.left = '-9999px';
                 captureArea.style.position = 'absolute';
 
-                // canvas를 blob으로 변환
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                const file = new File([blob], 'tarot-spread-result.png', { type: 'image/png' });
+                // canvas를 JPEG blob으로 변환 (파일 크기 최적화)
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+                const file = new File([blob], 'tarot-spread-result.jpg', { type: 'image/jpeg' });
+
+                console.log('[prepareShare] blob size:', blob.size, 'bytes');
 
                 // 캐시에 저장
                 cachedShareData = {
