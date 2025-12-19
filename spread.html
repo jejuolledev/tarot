@@ -1322,8 +1322,8 @@
                     // 이미지를 새 창/탭에서 열기
                     const newWindow = window.open('', '_blank');
                     if (newWindow) {
-                        const safeShareText = JSON.stringify(shareText);
-                        newWindow.document.write(
+                        const doc = newWindow.document;
+                        doc.write(
                             '<!DOCTYPE html>' +
                             '<html>' +
                             '<head>' +
@@ -1331,12 +1331,14 @@
                             '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
                             '<title>타로 결과 저장하기</title>' +
                             '<style>' +
-                            'body { margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }' +
+                            'body { margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-sizing: border-box; }' +
                             '.guide { background: white; padding: 15px 25px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }' +
                             '.guide h3 { margin: 0 0 10px 0; color: #764ba2; }' +
                             '.guide p { margin: 0; color: #666; font-size: 14px; }' +
                             'img { max-width: 100%; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }' +
-                            '.copy-btn { margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #25D366, #128C7E); color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }' +
+                            '.text-box { margin-top: 20px; width: 100%; max-width: 350px; }' +
+                            '.text-box p { color: white; margin: 0 0 10px 0; font-weight: bold; text-align: center; }' +
+                            'textarea { width: 100%; height: 120px; border-radius: 15px; border: none; padding: 15px; font-size: 14px; resize: none; box-sizing: border-box; }' +
                             '</style>' +
                             '</head>' +
                             '<body>' +
@@ -1345,21 +1347,14 @@
                             '<p>이미지를 <strong>길게 눌러서</strong> 저장하세요!</p>' +
                             '</div>' +
                             '<img src="' + imageUrl + '" alt="타로 결과">' +
-                            '<button class="copy-btn" id="copyBtn">📋 공유 텍스트 복사</button>' +
-                            '<script>' +
-                            'var shareText = ' + safeShareText + ';' +
-                            'document.getElementById("copyBtn").onclick = function() {' +
-                            'navigator.clipboard.writeText(shareText).then(function() {' +
-                            'alert("텍스트가 복사되었습니다! ✨");' +
-                            '}).catch(function() {' +
-                            'alert("복사 실패. 직접 복사해주세요.");' +
-                            '});' +
-                            '};' +
-                            '</script>' +
+                            '<div class="text-box">' +
+                            '<p>📋 아래 텍스트를 복사해서 함께 공유하세요!</p>' +
+                            '<textarea readonly onclick="this.select()">' + shareText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>' +
+                            '</div>' +
                             '</body>' +
                             '</html>'
                         );
-                        newWindow.document.close();
+                        doc.close();
                     } else {
                         alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
                     }
