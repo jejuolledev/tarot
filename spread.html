@@ -1459,15 +1459,13 @@
 
                 if (canShareFiles) {
                     try {
-                        // Safari: 이미지 + 텍스트/URL 함께 공유
+                        // Safari: 이미지 + 짧은 홍보 문구만
                         // Chrome: 이미지만 공유 (files + text 혼합 시 실패)
                         if (isSafari) {
-                            console.log('[share] Safari: attempting files + text share...');
+                            console.log('[share] Safari: attempting files + short text share...');
                             await navigator.share({
                                 files: [file],
-                                title: shareTitle,
-                                text: shareText,
-                                url: shareUrl
+                                text: '✨ 더 많은 콘텐츠는 moahub.co.kr 에서!'
                             });
                             console.log('[share] Safari files+text share succeeded');
                         } else {
