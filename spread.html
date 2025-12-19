@@ -975,6 +975,28 @@
             color: white;
             text-align: center;
         }
+
+        /* 캡처용 홍보 영역 스타일 */
+        .capture-promo {
+            background: linear-gradient(135deg, #ff6ec7 0%, #7873f5 100%);
+            padding: 0.8rem;
+            border-radius: 12px;
+            margin-top: 0.8rem;
+            text-align: center;
+        }
+
+        .capture-promo-text {
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .capture-promo-url {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -1062,10 +1084,14 @@
                 <div class="capture-summary-content" id="captureTotalMessage">과거의 경험을 바탕으로 현재를 충실히 살아가면, 미래는 당신이 바라는 방향으로 펼쳐질 것입니다. 각 순간을 소중히 여기며 나아가세요!</div>
             </div>
 
-            <p class="capture-site-url">🔮 tarot.moahub.co.kr</p>
+            <!-- 홍보 영역 -->
+            <div class="capture-promo">
+                <p class="capture-promo-text">✨ 더 많은 콘텐츠는 moahub.co.kr 에서!</p>
+                <p class="capture-promo-url">🔮 tarot.moahub.co.kr</p>
+            </div>
         </div>
     </div>
-    
+
     <script src="tarot-data.js"></script>
     <script>
         let drawnCards = [];
@@ -1410,9 +1436,14 @@
             if (drawnCards.length < 3) return;
 
             const shareBtn = document.getElementById('shareBtn');
+            const ua = navigator.userAgent;
+
+            // Safari 판별 (iOS Safari = Safari + !CriOS + !FxiOS)
+            const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|Chrome/.test(ua);
 
             // 디버깅 정보 출력
-            console.log('[share] ua:', navigator.userAgent);
+            console.log('[share] ua:', ua);
+            console.log('[share] isSafari:', isSafari);
             console.log('[share] cachedShareData:', cachedShareData ? 'exists' : 'null');
 
             // 캐시된 데이터 사용 (없으면 기본값)
@@ -1421,19 +1452,32 @@
             const shareTitle = cachedShareData?.title || '과거·현재·미래 타로 결과';
             const file = cachedShareData?.file;
 
-            // Step A: files-only 공유 시도 (캐시된 파일이 있을 때만)
+            // Step A: 파일 공유 시도 (캐시된 파일이 있을 때만)
             if (file && navigator.share) {
                 const canShareFiles = navigator.canShare?.({ files: [file] });
                 console.log('[share] canShareFiles:', canShareFiles);
 
                 if (canShareFiles) {
                     try {
-                        console.log('[share] attempting files-only share...');
-                        await navigator.share({ files: [file] });
-                        console.log('[share] files-only share succeeded');
+                        // Safari: 이미지 + 텍스트/URL 함께 공유
+                        // Chrome: 이미지만 공유 (files + text 혼합 시 실패)
+                        if (isSafari) {
+                            console.log('[share] Safari: attempting files + text share...');
+                            await navigator.share({
+                                files: [file],
+                                title: shareTitle,
+                                text: shareText,
+                                url: shareUrl
+                            });
+                            console.log('[share] Safari files+text share succeeded');
+                        } else {
+                            console.log('[share] Chrome: attempting files-only share...');
+                            await navigator.share({ files: [file] });
+                            console.log('[share] Chrome files-only share succeeded');
+                        }
                         return; // 성공 시 종료
                     } catch (err) {
-                        console.error('[share] step A (files-only) failed:', err?.name, err?.message, err);
+                        console.error('[share] step A failed:', err?.name, err?.message, err);
                         if (err.name === 'AbortError') {
                             return; // 사용자가 취소한 경우 종료
                         }
