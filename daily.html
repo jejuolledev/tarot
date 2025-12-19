@@ -477,7 +477,10 @@
     <script src="tarot-data.js"></script>
     <script>
         let currentCard = null;
-        
+
+        // iOS 공유용 캐시 (2단계 공유를 위해)
+        let cachedShareData = null;
+
         // 랜덤으로 1장의 카드를 뽑는 함수
         function drawRandomCard() {
             const randomIndex = Math.floor(Math.random() * tarotCards.length);
@@ -630,6 +633,16 @@
             shareBtn.disabled = true;
             shareBtn.innerHTML = '📤 이미지 생성 중...';
 
+            // 디버깅 정보 출력
+            console.log('[share] ua:', navigator.userAgent);
+
+            const shareUrl = 'https://tarot.moahub.co.kr';
+            const shareText = `✨ 오늘의 카드: ${currentCard.nameKo}\n\n${currentCard.daily}\n\n🔮 나도 타로 보러가기: ${shareUrl}`;
+            const shareTitle = '오늘의 타로 운세';
+
+            let file = null;
+            let imageUrl = null;
+
             try {
                 // 캡쳐용 영역 업데이트
                 document.getElementById('captureCardName').textContent = currentCard.nameKo;
@@ -664,7 +677,7 @@
                     backgroundColor: null,
                     scale: 2,
                     useCORS: true,
-                    allowTaint: true,
+                    allowTaint: false,
                     logging: false,
                     width: captureArea.offsetWidth,
                     height: captureArea.offsetHeight,
@@ -679,30 +692,73 @@
 
                 // canvas를 blob으로 변환
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                const file = new File([blob], 'tarot-result.png', { type: 'image/png' });
+                file = new File([blob], 'tarot-result.png', { type: 'image/png' });
+                imageUrl = canvas.toDataURL('image/png');
 
-                const shareUrl = 'https://tarot.moahub.co.kr';
-                const shareText = `✨ 오늘의 카드: ${currentCard.nameKo}\n\n${currentCard.daily}\n\n🔮 나도 타로 보러가기: ${shareUrl}`;
+                console.log('[share] image captured, file size:', file.size);
+            } catch (captureErr) {
+                console.error('[share] capture failed:', captureErr?.name, captureErr?.message, captureErr);
+            }
 
-                // Web Share API 지원 확인 및 파일 공유 가능 여부 확인
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: '오늘의 타로 운세',
-                        text: shareText,
-                        files: [file]
-                    });
-                } else {
-                    // 파일 공유 불가 시 이미지를 새 창에서 열기
-                    const imageUrl = canvas.toDataURL('image/png');
+            // Step A: files-only 공유 시도 (iOS Chrome 대응: files + text/title 섞지 않음)
+            if (file && navigator.share) {
+                const canShareFiles = navigator.canShare?.({ files: [file] });
+                console.log('[share] canShareFiles:', canShareFiles);
 
-                    // 클립보드에 텍스트 복사 시도
+                if (canShareFiles) {
                     try {
-                        await navigator.clipboard.writeText(shareText);
-                    } catch (e) {
-                        console.log('클립보드 복사 실패');
+                        console.log('[share] attempting files-only share...');
+                        await navigator.share({ files: [file] });
+                        console.log('[share] files-only share succeeded');
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = '📤 결과 공유하기';
+                        return; // 성공 시 종료
+                    } catch (err) {
+                        console.error('[share] step A (files-only) failed:', err?.name, err?.message, err);
+                        if (err.name === 'AbortError') {
+                            shareBtn.disabled = false;
+                            shareBtn.innerHTML = '📤 결과 공유하기';
+                            return; // 사용자가 취소한 경우 종료
+                        }
+                        // 실패 시 Step B로 진행
                     }
+                }
+            }
 
-                    // 이미지를 새 창/탭에서 열기
+            // Step B: 텍스트/링크만 공유 시도 (Web Share Level 1)
+            if (navigator.share) {
+                try {
+                    console.log('[share] attempting text-only share...');
+                    await navigator.share({
+                        title: shareTitle,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                    console.log('[share] text-only share succeeded');
+                    shareBtn.disabled = false;
+                    shareBtn.innerHTML = '📤 결과 공유하기';
+                    return; // 성공 시 종료
+                } catch (err) {
+                    console.error('[share] step B (text-only) failed:', err?.name, err?.message, err);
+                    if (err.name === 'AbortError') {
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = '📤 결과 공유하기';
+                        return; // 사용자가 취소한 경우 종료
+                    }
+                    // 실패 시 Step C로 진행
+                }
+            }
+
+            // Step C: Fallback - 클립보드 복사 또는 새 창 열기
+            console.log('[share] falling back to clipboard/newWindow...');
+
+            // 클립보드 복사 시도
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                console.log('[share] clipboard copy succeeded');
+
+                // 이미지가 있으면 새 창에서 열기
+                if (imageUrl) {
                     const newWindow = window.open('', '_blank');
                     if (newWindow) {
                         const doc = newWindow.document;
@@ -731,26 +787,31 @@
                             '</div>' +
                             '<img src="' + imageUrl + '" alt="타로 결과">' +
                             '<div class="text-box">' +
-                            '<p>📋 아래 텍스트를 복사해서 함께 공유하세요!</p>' +
+                            '<p>📋 링크가 복사되었습니다! 아래 텍스트도 함께 공유해보세요!</p>' +
                             '<textarea readonly onclick="this.select()">' + shareText.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>' +
                             '</div>' +
                             '</body>' +
                             '</html>'
                         );
                         doc.close();
-                    } else {
-                        alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = '📤 결과 공유하기';
+                        return;
                     }
                 }
-            } catch (error) {
-                console.error('공유 실패:', error);
-                if (error.name !== 'AbortError') {
-                    alert('공유하기에 실패했습니다. 다시 시도해주세요.');
-                }
-            } finally {
+
+                alert('링크가 클립보드에 복사되었습니다!');
                 shareBtn.disabled = false;
                 shareBtn.innerHTML = '📤 결과 공유하기';
+                return;
+            } catch (clipErr) {
+                console.error('[share] step C (clipboard) failed:', clipErr?.name, clipErr?.message, clipErr);
             }
+
+            // Step C-2: 마지막 fallback - prompt
+            prompt('아래 링크를 복사해서 공유해주세요!', shareUrl);
+            shareBtn.disabled = false;
+            shareBtn.innerHTML = '📤 결과 공유하기';
         }
     </script>
 
