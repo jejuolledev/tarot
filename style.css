@@ -132,7 +132,7 @@ h1 {
 .mode-select-single {
     display: flex;
     justify-content: center;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .mode-select-single .mode-card {
@@ -506,7 +506,7 @@ h1 {
     }
 
     .mode-select-single {
-        margin-top: 0.8rem;
+        margin-top: 0.3rem;
     }
 
     .mode-select-single .mode-card {
