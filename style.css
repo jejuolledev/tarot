@@ -129,6 +129,17 @@ h1 {
     margin-top: 2rem;
 }
 
+.mode-select-single {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.mode-select-single .mode-card {
+    width: 100%;
+    max-width: 400px;
+}
+
 .mode-card {
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(10px);
@@ -492,6 +503,14 @@ h1 {
     .mode-select {
         gap: 1rem;
         margin-top: 1rem;
+    }
+
+    .mode-select-single {
+        margin-top: 0.8rem;
+    }
+
+    .mode-select-single .mode-card {
+        max-width: 100%;
     }
 
     .mode-card {
